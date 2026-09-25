@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Breach notification deadlines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F6FA; --surface:#FFFFFF; --ink:#14213D; --muted:#5B6B84; --line:#D6DEE9;
+  --accent:#1F4E9C; --accent-ink:#FFFFFF; --chip:#E8EEF7;
+  --late:#B42318; --late-bg:#FDECEA; --soon:#9A5A06; --soon-bg:#FEF3DF; --ok:#1E7045; --ok-bg:#E6F3EB;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1524; --surface:#152038; --ink:#E6ECF5; --muted:#9AA9C1; --line:#2A3857;
+    --accent:#8DB2F2; --accent-ink:#0D1524; --chip:#1E2B48;
+    --late:#F4948B; --late-bg:#3A1D20; --soon:#F2C069; --soon-bg:#382C16; --ok:#83D3A6; --ok-bg:#16301F;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1524; --surface:#152038; --ink:#E6ECF5; --muted:#9AA9C1; --line:#2A3857;
+  --accent:#8DB2F2; --accent-ink:#0D1524; --chip:#1E2B48;
+  --late:#F4948B; --late-bg:#3A1D20; --soon:#F2C069; --soon-bg:#382C16; --ok:#83D3A6; --ok-bg:#16301F;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.5;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 18px 48px}
+header h1{font-size:clamp(1.7rem,4.5vw,2.5rem);line-height:1.1;letter-spacing:-.02em;margin:0 0 8px;font-weight:800}
+header p{margin:0;color:var(--muted);max-width:62ch}
+.grid{display:grid;gap:22px;margin-top:26px}
+@media (min-width:900px){.grid{grid-template-columns:400px 1fr;align-items:start}.results{position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.panel+.panel{margin-top:16px}
+h2{font-size:1.05rem;margin:0 0 12px;font-weight:700}
+label{display:block;font-weight:600;font-size:.92rem;margin:12px 0 4px}
+label:first-of-type{margin-top:0}
+.hint{display:block;font-weight:400;color:var(--muted);font-size:.82rem}
+input[type=text],input[type=datetime-local],input[type=date],input[type=number]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:42px}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.group-label{font-size:.85rem;color:var(--muted);margin:14px 0 6px;font-weight:600}
+.group-label:first-of-type{margin-top:0}
+.group-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 6px}
+.group-row .group-label{margin:0}
+.link-btn{font:inherit;font-size:.85rem;font-weight:600;color:var(--accent);background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;min-height:32px}
+.bulk{display:grid;grid-template-columns:1fr auto;gap:8px;margin:0 0 12px;padding:12px;background:var(--bg);border-radius:10px}
+.bulk label{grid-column:1/-1;margin:0}
+.bulk input{background:var(--surface)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.85rem;font-weight:600;color:var(--ink);background:var(--chip);border:1px solid transparent;border-radius:999px;padding:6px 11px;cursor:pointer;min-height:34px}
+.chip.st{min-width:46px}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.sel{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.sel-row{display:grid;grid-template-columns:1fr 130px 32px;gap:8px;align-items:center;padding:5px 0}
+.sel-row span{font-size:.9rem;font-weight:600}
+.sel-row input{min-height:36px;padding:6px 8px}
+.x{font:inherit;background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.2rem;border-radius:6px;min-height:32px}
+.sel-head{display:grid;grid-template-columns:1fr 130px 32px;gap:8px;font-size:.78rem;color:var(--muted)}
+/* next-deadline clock */
+.clock{border-radius:14px;padding:20px;background:var(--ink);color:var(--bg)}
+.clock .lead{font-size:.9rem;opacity:.8;margin:0}
+.clock .count{font-size:clamp(2.4rem,9vw,3.8rem);font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:6px 0}
+.clock .what{margin:0;font-weight:600}
+.clock .when{margin:2px 0 0;opacity:.8;font-size:.92rem}
+.clock.late{background:var(--late);color:#fff}
+.strip{position:relative;height:34px;margin:18px 4px 4px}
+.strip .bar{position:absolute;left:0;right:0;top:15px;height:4px;border-radius:2px;background:var(--line)}
+.strip .dot{position:absolute;top:10px;width:14px;height:14px;margin-left:-7px;border-radius:50%;border:2px solid var(--surface)}
+.strip .now{position:absolute;top:4px;width:2px;height:26px;margin-left:-1px;background:var(--ink)}
+.strip-ends{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+.list{list-style:none;margin:0;padding:0}
+.item{display:grid;grid-template-columns:118px 1fr;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.date{font-weight:700;font-size:.95rem}
+.date small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+.badge{display:inline-block;margin-top:5px;font-size:.78rem;font-weight:700;padding:2px 8px;border-radius:6px}
+.late .badge{background:var(--late-bg);color:var(--late)}
+.soon .badge{background:var(--soon-bg);color:var(--soon)}
+.ok .badge{background:var(--ok-bg);color:var(--ok)}
+.who{font-weight:700;margin:0}
+.who em{font-style:normal;font-weight:500;color:var(--muted)}
+.rule{margin:2px 0 0;font-size:.9rem}
+.cite{margin:2px 0 0;font-size:.8rem;color:var(--muted)}
+.cond{display:inline-block;margin-top:4px;font-size:.78rem;border:1px dashed var(--line);border-radius:6px;padding:1px 7px;color:var(--muted)}
+.note{font-size:.8rem;color:var(--soon);margin:3px 0 0}
+.flex .item{grid-template-columns:1fr}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btn{font:inherit;font-weight:600;font-size:.9rem;border-radius:8px;padding:9px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-height:40px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.empty{color:var(--muted);margin:0}
+.muted{color:var(--muted);font-size:.85rem}
+footer{margin-top:28px;color:var(--muted);font-size:.82rem;max-width:80ch}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+@media print{
+  :root{--bg:#fff;--surface:#fff;--ink:#000;--muted:#444;--line:#bbb}
+  .inputs,.actions,.strip,.strip-ends{display:none!important}
+  .grid{display:block}.results{position:static}
+  .clock{background:#fff!important;color:#000!important;border:2px solid #000}
+  .panel{border:0;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Breach notification deadlines</h1>
+    <p>Pick the regimes and states in play, enter the key dates, and see every notice clock on one timeline.</p>
+  </header>
+
+  <div class="grid">
+    <div class="inputs">
+      <section class="panel" aria-labelledby="h-incident">
+        <h2 id="h-incident">Incident</h2>
+        <label for="matter">Matter or incident name</label>
+        <input id="matter" type="text" placeholder="e.g., Acme vendor compromise">
+        <label for="disc">Discovered <span class="hint">When the organization discovered or was notified of the breach</span></label>
+        <input id="disc" type="datetime-local">
+        <label for="det">Determination <span class="hint">Materiality or reportability determination (SEC, NYDFS, bank rules). Leave blank to use discovery.</span></label>
+        <input id="det" type="datetime-local">
+        <label for="planned">Planned individual notice date <span class="hint">Used for regulator deadlines that run from notice to residents</span></label>
+        <input id="planned" type="date">
+      </section>
+
+      <section class="panel" aria-labelledby="h-scope">
+        <h2 id="h-scope">Where notice may be required</h2>
+        <div class="group-label">Federal and international</div>
+        <div class="chips" id="fedChips"></div>
+        <div class="group-row"><div class="group-label">States</div><button type="button" class="link-btn" id="allStates">Add all states</button></div>
+        <div class="chips" id="stateChips"></div>
+        <div class="sel" id="sel" hidden>
+          <div class="bulk" id="bulk" hidden>
+            <label for="bulkCount">Same count for every selected state <span class="hint">Residents affected per state. Overwrites existing state counts.</span></label>
+            <input id="bulkCount" type="number" min="0" inputmode="numeric" placeholder="e.g., 1200">
+            <button type="button" class="btn primary" id="bulkApply">Apply to states</button>
+          </div>
+          <div class="sel-head"><span>Selected</span><span>Affected people</span><span></span></div>
+          <div id="selRows"></div>
+          <p class="muted" style="margin:6px 0 0">Counts are residents of each state. Leave blank if unknown; threshold-based notices will show as conditional.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="results">
+      <section class="panel" aria-live="polite" id="out"></section>
+    </div>
+  </div>
+
+  <footer>
+    Rule set current as of September 2026. Covers the general breach statutes of all 50 states and DC; it does not cover U.S. territories or sector-specific state rules such as insurance data security laws. Deadlines are computed in your device's time zone, count the discovery date as day zero, and do not account for law-enforcement delays, tolling, or extensions. Confirm every date against the statute or regulation before relying on it.
+  </footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// Units: h = hours, d = calendar days, bd = US federal business days.
+// Anchors: disc = discovery, det = determination, indiv = notice to individuals, ye = Dec 31 of discovery year.
+const RULES = [
+  {id:'gdpr',g:'fed',name:'EU GDPR',items:[
+    {to:'Lead supervisory authority',n:72,u:'h',f:'disc',t:'Within 72 hours of becoming aware, unless unlikely to result in a risk to individuals',c:'GDPR Art. 33'},
+    {to:'Data subjects',t:'Without undue delay where the breach is likely to result in a high risk',c:'GDPR Art. 34'}]},
+  {id:'ukgdpr',g:'fed',name:'UK GDPR',items:[
+    {to:'ICO',n:72,u:'h',f:'disc',t:'Within 72 hours of becoming aware, unless unlikely to result in a risk to individuals',c:'UK GDPR Art. 33'},
+    {to:'Data subjects',t:'Without undue delay where the breach is likely to result in a high risk',c:'UK GDPR Art. 34'}]},
+  {id:'hipaa',g:'fed',name:'HIPAA',items:[
+    {to:'Individuals',n:60,u:'d',f:'disc',t:'Without unreasonable delay, no later than 60 calendar days after discovery',c:'45 C.F.R. § 164.404'},
+    {to:'Prominent media',n:60,u:'d',f:'disc',min:500,t:'Where 500+ residents of a state or jurisdiction are affected',c:'45 C.F.R. § 164.406'},
+    {to:'HHS',n:60,u:'d',f:'disc',min:500,t:'Contemporaneously with individual notice, within 60 days of discovery',c:'45 C.F.R. § 164.408(b)'},
+    {to:'HHS (annual log)',n:60,u:'d',f:'ye',max:499,t:'Within 60 days after the end of the calendar year of discovery',c:'45 C.F.R. § 164.408(c)'}]},
+  {id:'sec',g:'fed',name:'SEC Form 8-K',items:[
+    {to:'SEC (Form 8-K Item 1.05)',n:4,u:'bd',f:'det',t:'Within four business days after determining the incident is material',c:'Form 8-K Item 1.05; 17 C.F.R. § 229.106'}]},
+  {id:'nydfs',g:'fed',name:'NYDFS Part 500',items:[
+    {to:'NYDFS Superintendent',n:72,u:'h',f:'det',t:'Within 72 hours of determining a reportable cybersecurity incident occurred',c:'23 NYCRR § 500.17(a)'},
+    {to:'NYDFS (extortion payment)',t:'If a ransom is paid: notice within 24 hours of payment and a written explanation within 30 days',c:'23 NYCRR § 500.17(c)'}]},
+  {id:'bank',g:'fed',name:'Federal bank regulators',items:[
+    {to:'Primary federal regulator',n:36,u:'h',f:'det',t:'As soon as possible, no later than 36 hours after determining a notification incident occurred',c:'12 C.F.R. pt. 53 (OCC); pt. 225 subpt. N (FRB); pt. 304 subpt. C (FDIC)'}]},
+  {id:'glba',g:'fed',name:'FTC Safeguards Rule',items:[
+    {to:'FTC',n:30,u:'d',f:'disc',min:500,t:'Notification event involving 500+ consumers: as soon as possible, no later than 30 days after discovery',c:'16 C.F.R. § 314.4(j)'}]},
+  {id:'hbnr',g:'fed',name:'FTC Health Breach Rule',items:[
+    {to:'Individuals',n:60,u:'d',f:'disc',t:'Without unreasonable delay, no later than 60 calendar days after discovery',c:'16 C.F.R. § 318.4'},
+    {to:'FTC',n:60,u:'d',f:'disc',min:500,t:'At the same time as individual notice, within 60 days of discovery',c:'16 C.F.R. § 318.5'},
+    {to:'FTC (annual log)',n:60,u:'d',f:'ye',max:499,t:'Within 60 days after the end of the calendar year of discovery',c:'16 C.F.R. § 318.5'},
+    {to:'Prominent media',n:60,u:'d',f:'disc',min:500,t:'Where 500+ residents of a state or jurisdiction are affected',c:'16 C.F.R. § 318.6'}]},
+  {id:'dfars',g:'fed',name:'DFARS 7012 (DoD)',items:[
+    {to:'DoD via DIBNet',n:72,u:'h',f:'disc',t:'Rapidly report within 72 hours of discovery of a cyber incident',c:'DFARS 252.204-7012(c)'}]},
+
+  {id:'AL',g:'state',name:'Alabama',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'As expeditiously as possible, no later than 45 days',c:'Ala. Code § 8-38-5'},
+    {to:'Attorney General',n:45,u:'d',f:'disc',min:1001,t:'More than 1,000 residents: within 45 days',c:'Ala. Code § 8-38-6'},
+    {to:'Consumer reporting agencies',min:1001,t:'More than 1,000 residents: without unreasonable delay',c:'Ala. Code § 8-38-7'}]},
+  {id:'AZ',g:'state',name:'Arizona',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'Within 45 days of determining a breach occurred',c:'A.R.S. § 18-552'},
+    {to:'Attorney General and CRAs',n:45,u:'d',f:'disc',min:1001,t:'More than 1,000 individuals: within 45 days',c:'A.R.S. § 18-552'}]},
+  {id:'CA',g:'state',name:'California',items:[
+    {to:'Individuals',n:30,u:'d',f:'disc',t:'Within 30 calendar days of discovery or notification (law-enforcement and scoping delays permitted)',c:'Cal. Civ. Code § 1798.82'},
+    {to:'Attorney General (sample notice)',n:15,u:'d',f:'indiv',min:501,t:'More than 500 residents: within 15 calendar days of notifying residents',c:'Cal. Civ. Code § 1798.82(f)'}]},
+  {id:'CO',g:'state',name:'Colorado',items:[
+    {to:'Individuals',n:30,u:'d',f:'disc',t:'No later than 30 days after determining a breach occurred',c:'C.R.S. § 6-1-716'},
+    {to:'Attorney General',n:30,u:'d',f:'disc',min:500,t:'500+ residents: within 30 days',c:'C.R.S. § 6-1-716'}]},
+  {id:'CT',g:'state',name:'Connecticut',items:[
+    {to:'Individuals',n:60,u:'d',f:'disc',t:'Without unreasonable delay, no later than 60 days after discovery',c:'Conn. Gen. Stat. § 36a-701b'},
+    {to:'Attorney General',n:0,u:'d',f:'indiv',t:'No later than when residents are notified',c:'Conn. Gen. Stat. § 36a-701b'}]},
+  {id:'DE',g:'state',name:'Delaware',items:[
+    {to:'Individuals',n:60,u:'d',f:'disc',t:'No later than 60 days after determining a breach occurred',c:'6 Del. C. § 12B-102'},
+    {to:'Attorney General',n:0,u:'d',f:'indiv',min:501,t:'More than 500 residents: no later than when residents are notified',c:'6 Del. C. § 12B-102'}]},
+  {id:'DC',g:'state',name:'District of Columbia',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'D.C. Code § 28-3852'},
+    {to:'Attorney General',n:0,u:'d',f:'indiv',min:50,t:'50+ residents: no later than when residents are notified',c:'D.C. Code § 28-3852(b-1)'}]},
+  {id:'FL',g:'state',name:'Florida',items:[
+    {to:'Individuals',n:30,u:'d',f:'disc',t:'No later than 30 days after determining a breach occurred (15-day extension for good cause)',c:'Fla. Stat. § 501.171(4)'},
+    {to:'Department of Legal Affairs',n:30,u:'d',f:'disc',min:500,t:'500+ residents: within 30 days',c:'Fla. Stat. § 501.171(3)'}]},
+  {id:'GA',g:'state',name:'Georgia',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'O.C.G.A. § 10-1-912'},
+    {to:'Consumer reporting agencies',min:10001,t:'More than 10,000 residents: without unreasonable delay',c:'O.C.G.A. § 10-1-912(d)'}]},
+  {id:'IL',g:'state',name:'Illinois',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'815 ILCS 530/10'},
+    {to:'Attorney General',n:0,u:'d',f:'indiv',min:501,t:'More than 500 residents: no later than when residents are notified',c:'815 ILCS 530/10(e)'}]},
+  {id:'IN',g:'state',name:'Indiana',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'Without unreasonable delay, no later than 45 days after discovery',c:'Ind. Code § 24-4.9-3-3'},
+    {to:'Attorney General',n:45,u:'d',f:'disc',t:'Within the same 45-day window',c:'Ind. Code § 24-4.9-3-1(c)'}]},
+  {id:'LA',g:'state',name:'Louisiana',items:[
+    {to:'Individuals',n:60,u:'d',f:'disc',t:'No later than 60 days after discovery',c:'La. R.S. 51:3074'},
+    {to:'Attorney General',n:10,u:'d',f:'indiv',t:'Within 10 days of distributing notice to residents',c:'LAC 16:III.701'}]},
+  {id:'ME',g:'state',name:'Maine',items:[
+    {to:'Individuals',n:30,u:'d',f:'disc',t:'No later than 30 days after becoming aware of the breach',c:'10 M.R.S. § 1348'},
+    {to:'Attorney General or regulator',n:0,u:'d',f:'indiv',t:'When residents are notified',c:'10 M.R.S. § 1348(5)'}]},
+  {id:'MD',g:'state',name:'Maryland',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'As soon as reasonably practicable, no later than 45 days after discovery or notification',c:'Md. Code, Com. Law § 14-3504'},
+    {to:'Attorney General',t:'Before notifying individuals',c:'Md. Code, Com. Law § 14-3504(h)'}]},
+  {id:'MA',g:'state',name:'Massachusetts',items:[
+    {to:'Individuals',t:'As soon as practicable and without unreasonable delay',c:'M.G.L. c. 93H § 3'},
+    {to:'Attorney General and OCABR',t:'As soon as practicable and without unreasonable delay',c:'M.G.L. c. 93H § 3'}]},
+  {id:'MI',g:'state',name:'Michigan',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'MCL 445.72'},
+    {to:'Consumer reporting agencies',min:1001,t:'More than 1,000 residents: without unreasonable delay',c:'MCL 445.72(8)'}]},
+  {id:'NJ',g:'state',name:'New Jersey',items:[
+    {to:'Division of State Police',t:'Before notifying customers',c:'N.J.S.A. 56:8-163(c)'},
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'N.J.S.A. 56:8-163'}]},
+  {id:'NM',g:'state',name:'New Mexico',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'Most expedient time possible, no later than 45 days after discovery',c:'N.M. Stat. § 57-12C-6'},
+    {to:'Attorney General and CRAs',n:45,u:'d',f:'disc',min:1001,t:'More than 1,000 residents: within 45 days',c:'N.M. Stat. § 57-12C-10'}]},
+  {id:'NY',g:'state',name:'New York',items:[
+    {to:'Individuals',n:30,u:'d',f:'disc',t:'Most expedient time possible, no later than 30 days after discovery',c:'N.Y. Gen. Bus. Law § 899-aa(2)'},
+    {to:'AG, Dept. of State, State Police, and DFS',n:0,u:'d',f:'indiv',t:'When residents are notified',c:'N.Y. Gen. Bus. Law § 899-aa(8)'},
+    {to:'Consumer reporting agencies',min:5001,t:'More than 5,000 residents: when residents are notified',c:'N.Y. Gen. Bus. Law § 899-aa(8)(b)'}]},
+  {id:'NC',g:'state',name:'North Carolina',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'N.C.G.S. § 75-65'},
+    {to:'Attorney General',t:'Without unreasonable delay',c:'N.C.G.S. § 75-65(e1)'}]},
+  {id:'OH',g:'state',name:'Ohio',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'Most expedient time possible, no later than 45 days after discovery',c:'Ohio Rev. Code § 1349.19'}]},
+  {id:'OR',g:'state',name:'Oregon',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'No later than 45 days after discovery',c:'ORS 646A.604'},
+    {to:'Attorney General',n:45,u:'d',f:'disc',min:251,t:'More than 250 residents: within 45 days',c:'ORS 646A.604'}]},
+  {id:'PA',g:'state',name:'Pennsylvania',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'73 P.S. § 2303'},
+    {to:'Attorney General',n:0,u:'d',f:'indiv',min:501,t:'More than 500 residents: concurrently with notice to residents',c:'73 P.S. § 2303'}]},
+  {id:'RI',g:'state',name:'Rhode Island',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'Most expedient time possible, no later than 45 days after confirmation',c:'R.I. Gen. Laws § 11-49.3-4'},
+    {to:'Attorney General and CRAs',n:45,u:'d',f:'disc',min:501,t:'More than 500 residents: within 45 days',c:'R.I. Gen. Laws § 11-49.3-4'}]},
+  {id:'SD',g:'state',name:'South Dakota',items:[
+    {to:'Individuals',n:60,u:'d',f:'disc',t:'No later than 60 days after discovery',c:'SDCL § 22-40-20'},
+    {to:'Attorney General',n:60,u:'d',f:'disc',min:251,t:'More than 250 residents: within 60 days',c:'SDCL § 22-40-20'}]},
+  {id:'TN',g:'state',name:'Tennessee',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'Immediately, no later than 45 days after discovery',c:'Tenn. Code § 47-18-2107'}]},
+  {id:'TX',g:'state',name:'Texas',items:[
+    {to:'Individuals',n:60,u:'d',f:'disc',t:'Without unreasonable delay, no later than 60 days after determining a breach occurred',c:'Tex. Bus. & Com. Code § 521.053(b)'},
+    {to:'Attorney General (online form)',n:30,u:'d',f:'disc',min:250,t:'250+ Texans: no later than 30 days after determining a breach occurred',c:'Tex. Bus. & Com. Code § 521.053(i)'}]},
+  {id:'VT',g:'state',name:'Vermont',items:[
+    {to:'Attorney General (preliminary)',n:14,u:'bd',f:'disc',t:'Preliminary notice within 14 business days of discovery',c:'9 V.S.A. § 2435(b)(3)'},
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'Most expedient time possible, no later than 45 days after discovery',c:'9 V.S.A. § 2435(b)(1)'}]},
+  {id:'VA',g:'state',name:'Virginia',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'Va. Code § 18.2-186.6'},
+    {to:'Attorney General',t:'Without unreasonable delay',c:'Va. Code § 18.2-186.6'}]},
+  {id:'WA',g:'state',name:'Washington',items:[
+    {to:'Individuals',n:30,u:'d',f:'disc',t:'Most expedient time possible, no later than 30 days after discovery',c:'RCW 19.255.010'},
+    {to:'Attorney General',n:30,u:'d',f:'disc',min:501,t:'More than 500 residents: within 30 days',c:'RCW 19.255.010(7)'}]},
+  {id:'WI',g:'state',name:'Wisconsin',items:[
+    {to:'Individuals',n:45,u:'d',f:'disc',t:'Within a reasonable time, no later than 45 days after learning of the breach',c:'Wis. Stat. § 134.98(3)'}]},
+  {id:'AK',g:'state',name:'Alaska',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'AS 45.48.010'},
+    {to:'Attorney General',t:'Only if you determine notice is not required: written determination to the AG',c:'AS 45.48.010(c)'},
+    {to:'Consumer reporting agencies',min:1001,t:'More than 1,000 residents: without unreasonable delay',c:'AS 45.48.040'}]},
+  {id:'AR',g:'state',name:'Arkansas',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'Ark. Code § 4-110-105'},
+    {to:'Attorney General',n:45,u:'d',f:'disc',min:1001,t:'More than 1,000 residents: when individuals are notified or within 45 days of determining the breach, whichever is first',c:'Ark. Code § 4-110-105(d)'}]},
+  {id:'HI',g:'state',name:'Hawaii',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'HRS § 487N-2'},
+    {to:'Office of Consumer Protection and CRAs',min:1001,t:'More than 1,000 residents: without unreasonable delay',c:'HRS § 487N-2(f)'}]},
+  {id:'ID',g:'state',name:'Idaho',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'Idaho Code § 28-51-105'},
+    {to:'Attorney General (public agencies only)',t:'State agencies notify the AG within 24 hours of discovery',c:'Idaho Code § 28-51-105(1)'}]},
+  {id:'IA',g:'state',name:'Iowa',items:[
+    {to:'Individuals',t:'Most expedient manner possible and without unreasonable delay',c:'Iowa Code § 715C.2'},
+    {to:'Attorney General',n:5,u:'bd',f:'indiv',min:501,t:'More than 500 residents: within 5 business days after notifying residents',c:'Iowa Code § 715C.2(8)'}]},
+  {id:'KS',g:'state',name:'Kansas',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'K.S.A. § 50-7a02'},
+    {to:'Consumer reporting agencies',min:1001,t:'More than 1,000 residents: without unreasonable delay',c:'K.S.A. § 50-7a02(f)'}]},
+  {id:'KY',g:'state',name:'Kentucky',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'KRS 365.732'},
+    {to:'Consumer reporting agencies',min:1001,t:'More than 1,000 persons: without unreasonable delay',c:'KRS 365.732(7)'}]},
+  {id:'MN',g:'state',name:'Minnesota',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'Minn. Stat. § 325E.61'},
+    {to:'Consumer reporting agencies',n:48,u:'h',f:'indiv',min:501,t:'More than 500 persons notified at one time: within 48 hours',c:'Minn. Stat. § 325E.61(2)'}]},
+  {id:'MS',g:'state',name:'Mississippi',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'Miss. Code § 75-24-29'}]},
+  {id:'MO',g:'state',name:'Missouri',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'RSMo § 407.1500'},
+    {to:'Attorney General and CRAs',min:1001,t:'More than 1,000 residents: without unreasonable delay',c:'RSMo § 407.1500(2)(8)'}]},
+  {id:'MT',g:'state',name:'Montana',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'MCA § 30-14-1704'},
+    {to:'Office of Consumer Protection',n:0,u:'d',f:'indiv',t:'Simultaneously with notice to residents',c:'MCA § 30-14-1704(8)'}]},
+  {id:'NE',g:'state',name:'Nebraska',items:[
+    {to:'Individuals',t:'As soon as possible and without unreasonable delay',c:'Neb. Rev. Stat. § 87-803'},
+    {to:'Attorney General',n:0,u:'d',f:'indiv',t:'No later than when residents are notified',c:'Neb. Rev. Stat. § 87-803(2)'}]},
+  {id:'NV',g:'state',name:'Nevada',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'NRS 603A.220'},
+    {to:'Consumer reporting agencies',min:1001,t:'More than 1,000 persons: without unreasonable delay',c:'NRS 603A.220(6)'}]},
+  {id:'NH',g:'state',name:'New Hampshire',items:[
+    {to:'Individuals',t:'As soon as possible',c:'RSA 359-C:20'},
+    {to:'Attorney General or primary regulator',t:'Notice required for any breach affecting residents',c:'RSA 359-C:20(I)(b)'},
+    {to:'Consumer reporting agencies',min:1001,t:'More than 1,000 residents: without unreasonable delay',c:'RSA 359-C:20(VI)(a)'}]},
+  {id:'ND',g:'state',name:'North Dakota',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'N.D.C.C. § 51-30-02'},
+    {to:'Attorney General',min:251,t:'More than 250 individuals: most expedient time possible and without unreasonable delay',c:'N.D.C.C. § 51-30-02'}]},
+  {id:'OK',g:'state',name:'Oklahoma',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'24 O.S. § 163'},
+    {to:'Attorney General',n:60,u:'d',f:'indiv',min:500,t:'500+ residents (1,000+ for consumer reporting agencies): no later than 60 days after notifying residents',c:'24 O.S. § 163 (as amended eff. Jan. 1, 2026)'}]},
+  {id:'SC',g:'state',name:'South Carolina',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'S.C. Code § 39-1-90'},
+    {to:'Department of Consumer Affairs and CRAs',min:1001,t:'More than 1,000 persons: without unreasonable delay',c:'S.C. Code § 39-1-90(K)'}]},
+  {id:'UT',g:'state',name:'Utah',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'Utah Code § 13-44-202'},
+    {to:'Attorney General and Utah Cyber Center',min:500,t:'500+ residents: notice required; CRAs also if 1,000+',c:'Utah Code § 13-44-202'}]},
+  {id:'WV',g:'state',name:'West Virginia',items:[
+    {to:'Individuals',t:'Without unreasonable delay',c:'W. Va. Code § 46A-2A-102'},
+    {to:'Consumer reporting agencies',min:1001,t:'More than 1,000 persons: without unreasonable delay',c:'W. Va. Code § 46A-2A-102(e)'}]},
+  {id:'WY',g:'state',name:'Wyoming',items:[
+    {to:'Individuals',t:'Most expedient time possible and without unreasonable delay',c:'Wyo. Stat. § 40-12-502'}]}
+];
+RULES.sort((a,b)=>a.g===b.g?(a.g==='state'?a.name.localeCompare(b.name):0):a.g==='fed'?-1:1);
+const byId = Object.fromEntries(RULES.map(r=>[r.id,r]));
+const $ = id => document.getElementById(id);
+let state = {matter:'',disc:'',det:'',planned:'',sel:{}};
+try{const s=JSON.parse(localStorage.getItem('bnc-v1')||'null'); if(s&&s.sel) state=Object.assign(state,s);}catch(e){}
+function save(){try{localStorage.setItem('bnc-v1',JSON.stringify(state))}catch(e){}}
+
+// US federal holidays with weekend observance shifts
+const hcache={};
+function holidays(y){
+  if(hcache[y]) return hcache[y];
+  const s=new Set(), key=d=>d.toISOString().slice(0,10);
+  const add=d=>{const w=d.getUTCDay(); if(w===6)d.setUTCDate(d.getUTCDate()-1); if(w===0)d.setUTCDate(d.getUTCDate()+1); s.add(key(d));};
+  const nth=(m,wd,n)=>{const d=new Date(Date.UTC(y,m,1)); while(d.getUTCDay()!==wd)d.setUTCDate(d.getUTCDate()+1); d.setUTCDate(d.getUTCDate()+7*(n-1)); return d;};
+  const last=(m,wd)=>{const d=new Date(Date.UTC(y,m+1,0)); while(d.getUTCDay()!==wd)d.setUTCDate(d.getUTCDate()-1); return d;};
+  [[0,1],[5,19],[6,4],[10,11],[11,25]].forEach(([m,d])=>add(new Date(Date.UTC(y,m,d))));
+  [nth(0,1,3),nth(1,1,3),last(4,1),nth(8,1,1),nth(9,1,2),nth(10,4,4)].forEach(d=>s.add(key(d)));
+  return hcache[y]=s;
+}
+const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const endOfDay=d=>{const x=new Date(d);x.setHours(23,59,0,0);return x;};
+function addDays(b,n){const x=new Date(b);x.setDate(x.getDate()+n);return endOfDay(x);}
+function addBiz(b,n){const x=new Date(b);let k=0;while(k<n){x.setDate(x.getDate()+1);const w=x.getDay();if(w&&w!==6&&!holidays(x.getFullYear()).has(ymd(x)))k++;}return endOfDay(x);}
+function due(base,it){return it.u==='h'?new Date(base.getTime()+it.n*36e5):it.u==='bd'?addBiz(base,it.n):addDays(base,it.n);}
+const parseDT=v=>v?new Date(v):null;
+const parseD=v=>{if(!v)return null;const[y,m,d]=v.split('-').map(Number);return endOfDay(new Date(y,m-1,d));};
+const fmtN=n=>n.toLocaleString();
+function fmtDate(d,hours){return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'})+(hours?' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):'');}
+function span(ms){const a=Math.abs(ms),d=Math.floor(a/864e5),h=Math.floor(a%864e5/36e5),m=Math.floor(a%36e5/6e4);return d?`${d}d ${h}h`:h?`${h}h ${m}m`:`${m}m`;}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function compute(){
+  const disc=parseDT(state.disc), det=parseDT(state.det), planned=parseD(state.planned);
+  const fixed=[], flex=[]; let skipped=0;
+  if(!disc) return null;
+  for(const id of Object.keys(state.sel)){
+    const r=byId[id]; if(!r) continue;
+    const count=state.sel[id]===''||state.sel[id]==null?null:Number(state.sel[id]);
+    const indivItem=r.items.find(i=>i.to==='Individuals'&&i.n!=null&&i.f==='disc');
+    const indivDue=indivItem?due(disc,indivItem):null;
+    for(const it of r.items){
+      if(count!=null&&((it.min&&count<it.min)||(it.max!=null&&count>it.max))){skipped++;continue;}
+      const cond=count==null&&(it.min||it.max!=null)?(it.min?`Applies if ${fmtN(it.min)}+ affected`:`Applies if fewer than ${fmtN(it.max+1)} affected`):'';
+      const base={juris:r.name,to:it.to,t:it.t,c:it.c,cond,note:''};
+      if(it.n==null){flex.push(base);continue;}
+      let anchor=disc;
+      if(it.f==='det'){anchor=det||disc; if(!det) base.note='Measured from discovery. Add a determination date if it differs.';}
+      if(it.f==='ye') anchor=new Date(disc.getFullYear(),11,31);
+      if(it.f==='indiv'){
+        anchor=planned||indivDue;
+        if(!anchor){base.t+='. Add a planned individual notice date to compute this.';flex.push(base);continue;}
+        if(!planned) base.note='Measured from the latest permitted individual notice date. Add a planned notice date for a firmer deadline.';
+      }
+      fixed.push(Object.assign(base,{due:due(anchor,it),hours:it.u==='h'}));
+    }
+  }
+  fixed.sort((a,b)=>a.due-b.due);
+  return {fixed,flex,skipped,disc};
+}
+function status(d,now){const ms=d-now;return ms<0?'late':ms<=7*864e5?'soon':'ok';}
+
+function render(){
+  const out=$('out'); const res=compute(); const now=new Date();
+  if(!Object.keys(state.sel).length||!res){
+    out.innerHTML=`<h2>Deadlines</h2><p class="empty">${!res?'Enter the discovery date and time to start the clocks.':'Select at least one regime or state to see its deadlines.'}</p>`;
+    if(!res&&Object.keys(state.sel).length===0) out.innerHTML=`<h2>Deadlines</h2><p class="empty">Enter the discovery date and select the regimes and states in play. Deadlines appear here.</p>`;
+    return;
+  }
+  const {fixed,flex,skipped,disc}=res;
+  let html='';
+  const next=fixed.find(x=>x.due>=now), overdue=fixed.filter(x=>x.due<now).length;
+  if(next){
+    html+=`<div class="clock"><p class="lead">Next deadline${state.matter?' for '+esc(state.matter):''}</p><p class="count">${span(next.due-now)}</p><p class="what">${esc(next.juris)}: ${esc(next.to)}</p><p class="when">Due ${fmtDate(next.due,true)}${overdue?` · ${overdue} already passed`:''}</p></div>`;
+  }else if(fixed.length){
+    html+=`<div class="clock late"><p class="lead">${state.matter?esc(state.matter):'This incident'}</p><p class="count">${overdue} passed</p><p class="what">Every computed deadline has passed.</p></div>`;
+  }
+  if(fixed.length>1){
+    const t0=disc.getTime(), t1=Math.max(fixed[fixed.length-1].due.getTime(),now.getTime()), w=t1-t0||1;
+    const pos=t=>Math.min(100,Math.max(0,(t-t0)/w*100));
+    const col={late:'var(--late)',soon:'var(--soon)',ok:'var(--ok)'};
+    html+=`<div class="strip" aria-hidden="true"><div class="bar"></div>${fixed.map(x=>`<div class="dot" title="${esc(x.juris+': '+x.to)}" style="left:${pos(x.due)}%;background:${col[status(x.due,now)]}"></div>`).join('')}<div class="now" style="left:${pos(now)}%"></div></div><div class="strip-ends" aria-hidden="true"><span>Discovered ${disc.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span><span>Now marked by the line</span><span>${fixed[fixed.length-1].due.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span></div>`;
+  }
+  html+=`<h2 style="margin-top:20px">Fixed deadlines (${fixed.length})</h2>`;
+  html+=fixed.length?`<ul class="list">${fixed.map(x=>{const s=status(x.due,now),ms=x.due-now;return `<li class="item ${s}"><div class="date">${x.due.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}<small>${x.due.toLocaleDateString(undefined,{weekday:'long'})}${x.hours?', '+x.due.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):''}</small><span class="badge">${ms<0?'Passed '+span(ms)+' ago':span(ms)+' left'}</span></div><div><p class="who">${esc(x.to)} <em>${esc(x.juris)}</em></p><p class="rule">${esc(x.t)}</p><p class="cite">${esc(x.c)}</p>${x.cond?`<span class="cond">${esc(x.cond)}</span>`:''}${x.note?`<p class="note">${esc(x.note)}</p>`:''}</div></li>`}).join('')}</ul>`:`<p class="empty">None of the selected rules set a fixed clock.</p>`;
+  if(flex.length){
+    html+=`<h2 style="margin-top:20px">No fixed day count (${flex.length})</h2><ul class="list flex">${flex.map(x=>`<li class="item"><div><p class="who">${esc(x.to)} <em>${esc(x.juris)}</em></p><p class="rule">${esc(x.t)}</p><p class="cite">${esc(x.c)}</p>${x.cond?`<span class="cond">${esc(x.cond)}</span>`:''}</div></li>`).join('')}</ul>`;
+  }
+  if(skipped) html+=`<p class="muted" style="margin-top:12px">${skipped} threshold-based notice${skipped>1?'s':''} hidden because the affected count is below or above the trigger.</p>`;
+  html+=`<div class="actions"><button class="btn primary" id="copyBtn">Copy summary</button><button class="btn" id="printBtn">Print</button><button class="btn" id="clearBtn">Clear incident</button></div>`;
+  out.innerHTML=html;
+  $('copyBtn').onclick=()=>copySummary(res);
+  $('printBtn').onclick=()=>window.print();
+  $('clearBtn').onclick=clearAll;
+}
+
+function copySummary(res){
+  const lines=[`Breach notification deadlines${state.matter?' | '+state.matter:''}`,`Discovered: ${fmtDate(res.disc,true)}`];
+  if(state.det) lines.push(`Determination: ${fmtDate(new Date(state.det),true)}`);
+  lines.push('','FIXED DEADLINES');
+  res.fixed.forEach(x=>lines.push(`${fmtDate(x.due,x.hours)} | ${x.juris} | ${x.to} | ${x.c}${x.cond?' ('+x.cond+')':''}`));
+  if(res.flex.length){lines.push('','NO FIXED DAY COUNT');res.flex.forEach(x=>lines.push(`${x.juris} | ${x.to} | ${x.t} | ${x.c}${x.cond?' ('+x.cond+')':''}`));}
+  lines.push('','Computed deadlines; verify against the governing statute or regulation.');
+  const text=lines.join('\n');
+  const done=()=>toast('Summary copied');
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,()=>fallbackCopy(text,done)); else fallbackCopy(text,done);
+}
+function fallbackCopy(text,done){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){toast('Copy failed. Select and copy manually.');}ta.remove();}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1800);}
+function clearAll(){if(!confirm('Clear the incident dates and selections?'))return;state={matter:'',disc:'',det:'',planned:'',sel:{}};save();syncInputs();buildChips();renderSel();render();}
+
+function buildChips(){
+  const mk=(r,short)=>`<button type="button" class="chip${short?' st':''}" data-id="${r.id}" aria-pressed="${r.id in state.sel}" ${short?`title="${r.name}" aria-label="${r.name}"`:''}>${short?r.id:r.name}</button>`;
+  $('fedChips').innerHTML=RULES.filter(r=>r.g==='fed').map(r=>mk(r,false)).join('');
+  $('stateChips').innerHTML=RULES.filter(r=>r.g==='state').map(r=>mk(r,true)).join('');
+}
+function renderSel(){
+  const ids=RULES.map(r=>r.id).filter(id=>id in state.sel);
+  $('sel').hidden=!ids.length;
+  const stIds=RULES.filter(r=>r.g==='state').map(r=>r.id), allOn=stIds.every(id=>id in state.sel), anySt=stIds.some(id=>id in state.sel);
+  $('allStates').textContent=allOn?'Remove all states':'Add all states';
+  $('allStates').setAttribute('aria-pressed',allOn);
+  $('bulk').hidden=!anySt;
+  $('selRows').innerHTML=ids.map(id=>`<div class="sel-row"><span>${byId[id].name}</span><input type="number" min="0" inputmode="numeric" placeholder="Unknown" aria-label="People affected, ${byId[id].name}" data-count="${id}" value="${state.sel[id]??''}"><button class="x" data-rm="${id}" aria-label="Remove ${byId[id].name}">×</button></div>`).join('');
+}
+function syncInputs(){['matter','disc','det','planned'].forEach(k=>$(k).value=state[k]||'');}
+
+document.addEventListener('click',e=>{
+  const c=e.target.closest('.chip');
+  if(c){const id=c.dataset.id; if(id in state.sel) delete state.sel[id]; else state.sel[id]=''; c.setAttribute('aria-pressed',id in state.sel); save();renderSel();render();return;}
+  if(e.target.id==='allStates'){
+    const stIds=RULES.filter(r=>r.g==='state').map(r=>r.id), allOn=stIds.every(id=>id in state.sel);
+    stIds.forEach(id=>{if(allOn)delete state.sel[id];else if(!(id in state.sel))state.sel[id]='';});
+    save();buildChips();renderSel();render();toast(allOn?'All states removed':'All 50 states and DC added');return;
+  }
+  if(e.target.id==='bulkApply'){
+    const v=$('bulkCount').value.trim();
+    if(v===''||Number(v)<0){toast('Enter a count of 0 or more');$('bulkCount').focus();return;}
+    const stIds=RULES.filter(r=>r.g==='state'&&r.id in state.sel).map(r=>r.id);
+    stIds.forEach(id=>state.sel[id]=v);
+    save();renderSel();render();toast(`Applied ${Number(v).toLocaleString()} to ${stIds.length} state${stIds.length>1?'s':''}`);return;
+  }
+  const rm=e.target.closest('[data-rm]');
+  if(rm){delete state.sel[rm.dataset.rm];save();buildChips();renderSel();render();}
+});
+document.addEventListener('input',e=>{
+  const k=e.target.id;
+  if(['matter','disc','det','planned'].includes(k)){state[k]=e.target.value;save();render();}
+  if(e.target.dataset.count){state.sel[e.target.dataset.count]=e.target.value;save();render();}
+});
+syncInputs();buildChips();renderSel();render();
+setInterval(render,60000);
+</script>
+</body>
+</html>
